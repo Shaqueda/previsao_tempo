@@ -14,37 +14,24 @@
     <div class="app-container">
         <div id="map" class="map-container"></div>
         
-        <div class="sidebar">
-            <h1>Tempo Agora</h1>
-            <h2>Ceará</h2>
+        <!-- Painel de Detalhes da Cidade (Oculto por Padrão) -->
+        <div id="city-details-panel" class="details-panel" style="display: none;">
+            <button onclick="closeDetails()" class="close-btn">← Voltar ao Mapa</button>
+            <h3 id="detail-city-name">Nome da Cidade</h3>
+            <div class="detail-subtitle">Resumo das 17h00</div>
             
-            <div id="default-sidebar-content" style="display: flex; flex-direction: column; height: 100%;">
-                <div class="time-display" id="time-display">--:--</div>
-                <div class="date-display" id="date-display">-- de --</div>
-                <div style="margin-top: 20px; color: var(--text-secondary); font-size: 0.9rem; font-style: italic;">
-                    *Clique em uma cidade no mapa para ver o resumo de hoje.
+            <div class="detail-main">
+                <div id="detail-icon" class="detail-icon">☁️</div>
+                <div class="detail-temp-box">
+                    <span id="detail-temp">--°</span>
+                    <span id="detail-desc">Nublado</span>
                 </div>
             </div>
 
-            <!-- Painel de Detalhes da Cidade (Oculto por Padrão) -->
-            <div id="city-details-panel" class="details-panel" style="display: none;">
-                <button onclick="closeDetails()" class="close-btn">← Voltar</button>
-                <h3 id="detail-city-name">Nome da Cidade</h3>
-                <div class="detail-subtitle">Resumo das 17h00</div>
-                
-                <div class="detail-main">
-                    <div id="detail-icon" class="detail-icon">☁️</div>
-                    <div class="detail-temp-box">
-                        <span id="detail-temp">--°</span>
-                        <span id="detail-desc">Nublado</span>
-                    </div>
-                </div>
-
-                <div class="detail-stats">
-                    <div class="stat-box">
-                        <span class="stat-label">Chuva Acumulada (Hoje)</span>
-                        <span id="detail-rain" class="stat-value">-- mm</span>
-                    </div>
+            <div class="detail-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Chuva Acumulada (Hoje)</span>
+                    <span id="detail-rain" class="stat-value">-- mm</span>
                 </div>
             </div>
         </div>

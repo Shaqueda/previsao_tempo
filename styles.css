@@ -29,59 +29,9 @@ body {
   flex-direction: row;
 }
 
-/* Sidebar / Overlay */
-.sidebar {
-  width: 30%;
-  height: 100vh;
-  background: linear-gradient(to right, #070a12, var(--bg-color));
-  z-index: 1000;
-  padding: 50px 40px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 10px 0 30px rgba(0,0,0,0.8);
-}
-
-.sidebar h1 {
-  font-size: 3.5rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 5px;
-  line-height: 1.1;
-  background: linear-gradient(to bottom right, #ffffff, #94a3b8);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
-}
-
-.sidebar h2 {
-  font-size: 1.8rem;
-  font-weight: 500;
-  color: var(--accent-color);
-  margin-bottom: 40px;
-  text-transform: uppercase;
-  letter-spacing: 6px;
-  text-shadow: 0 0 10px var(--accent-glow);
-}
-
-.time-display {
-  margin-top: auto;
-  font-size: 3.5rem;
-  font-weight: 800;
-  text-shadow: 0 4px 15px rgba(0,0,0,0.8);
-  letter-spacing: 1px;
-}
-
-.date-display {
-  font-size: 1.4rem;
-  color: var(--text-secondary);
-  text-transform: capitalize;
-}
-
 /* Map */
 .map-container {
-  width: 70%;
+  width: 100%;
   height: 100vh;
   background: var(--bg-color) !important;
   position: relative;
@@ -167,13 +117,39 @@ body {
 .details-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  animation: slideIn 0.3s ease-out;
+  position: absolute;
+  z-index: 2000;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.2);
+  width: 380px;
+  color: #fff;
+  animation: slideInCorner 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes slideInCorner {
+  0% {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+  20% {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    top: 40px;
+    left: 40px;
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
 }
 
 .close-btn {

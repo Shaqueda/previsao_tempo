@@ -24,22 +24,39 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png'
     attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
 }).addTo(map);
 
+// Global variable to store Ceará bounds for zooming back
+let cearaStateBounds;
+
 // Draw Ceará borders using IBGE API to highlight the state
 fetch('https://servicodados.ibge.gov.br/api/v3/malhas/estados/CE?formato=application/vnd.geo+json')
     .then(response => response.json())
     .then(data => {
-        const geoLayer = L.geoJSON(data, {
-            style: {
-                color: '#38bdf8',
-                weight: 3,
-                opacity: 0.9,
-                fillColor: '#38bdf8',
-                fillOpacity: 0.05
-            }
+        // Extract coordinates and convert from [lng, lat] to [lat, lng]
+        const cearaCoords = data.features[0].geometry.coordinates[0].map(
+            ([lng, lat]) => [lat, lng]
+        );
+        
+        // Bounding box covering Brazil/South America
+        const outerCoords = [
+            [15, -85],
+            [15, -25],
+            [-40, -25],
+            [-40, -85],
+            [15, -85]
+        ];
+
+        // Draw inverted polygon to hide everything outside Ceará
+        L.polygon([outerCoords, cearaCoords], {
+            color: '#38bdf8', // Vibrant sky blue border for the state hole
+            weight: 3,
+            fillColor: '#0b0f19', // Matches background
+            fillOpacity: 1,
+            fillRule: 'evenodd'
         }).addTo(map);
         
-        // Make the map perfectly fit the bounds of Ceará!
-        map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
+        // Calculate the actual bounds of Ceará and fit the map
+        cearaStateBounds = L.latLngBounds(cearaCoords);
+        map.fitBounds(cearaStateBounds, { padding: [20, 20] });
     });
 
 // Keep track of markers to update them
@@ -139,20 +156,22 @@ async function fetchWeatherData() {
     }
 }
 
-// Clock updates
-function updateClock() {
-    const now = new Date();
-    const timeOpts = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Fortaleza' };
-    const dateOpts = { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'America/Fortaleza' };
-    
-    document.getElementById('time-display').textContent = now.toLocaleTimeString('pt-BR', timeOpts);
-    document.getElementById('date-display').textContent = now.toLocaleDateString('pt-BR', dateOpts);
-}
-
 // Interactivity functions
 function showCityDetails(city, data) {
-    document.getElementById('default-sidebar-content').style.display = 'none';
-    document.getElementById('city-details-panel').style.display = 'flex';
+    const panel = document.getElementById('city-details-panel');
+    
+    // Reset animation by triggering reflow
+    panel.style.animation = 'none';
+    panel.offsetHeight; /* trigger reflow */
+    panel.style.animation = null; 
+    
+    panel.style.display = 'flex';
+
+    // Fly to the clicked city with a smooth zoom
+    map.flyTo([city.lat, city.lon], 11, {
+        duration: 1.5,
+        easeLinearity: 0.25
+    });
 
     // Index 17 represents 17:00 of the first returned day (today)
     const hourIndex = 17;
@@ -171,14 +190,19 @@ function showCityDetails(city, data) {
 
 function closeDetails() {
     document.getElementById('city-details-panel').style.display = 'none';
-    document.getElementById('default-sidebar-content').style.display = 'flex';
+    
+    // Fly back to show the entire state
+    if (cearaStateBounds) {
+        map.flyToBounds(cearaStateBounds, {
+            padding: [20, 20],
+            duration: 1.5,
+            easeLinearity: 0.25
+        });
+    }
 }
 // Expose for inline HTML onclick
 window.closeDetails = closeDetails;
 
 // Initialize
-updateClock();
-setInterval(updateClock, 1000);
-
 fetchWeatherData();
 setInterval(fetchWeatherData, 5 * 60 * 1000); // Update every 5 mins

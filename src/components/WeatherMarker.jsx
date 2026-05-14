@@ -20,10 +20,10 @@ const WeatherIcon = ({ code, isDay }) => {
   return <Cloud {...props} />;
 };
 
-export const WeatherMarker = ({ city }) => {
+export const WeatherMarker = ({ city, onClick }) => {
   if (!city.weather) return null;
 
-  const createIcon = () => {
+  const icon = React.useMemo(() => {
     const div = document.createElement('div');
     const root = createRoot(div);
     root.render(
@@ -41,15 +41,26 @@ export const WeatherMarker = ({ city }) => {
       </div>
     );
     
+    // Fallback: Bind native DOM click event directly to the div
+    div.addEventListener('click', () => {
+      onClick(city);
+    });
+    
     return L.divIcon({
       html: div,
       className: '',
       iconSize: [160, 60],
       iconAnchor: [80, 30]
     });
-  };
+  }, [city.name, city.weather.temp, city.weather.code]); // Only recreate if weather changes
 
   return (
-    <Marker position={[city.lat, city.lon]} icon={createIcon()} />
+    <Marker 
+      position={[city.lat, city.lon]} 
+      icon={icon} 
+      eventHandlers={{ 
+        click: () => onClick(city) 
+      }}
+    />
   );
 };
