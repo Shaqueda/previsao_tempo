@@ -1,0 +1,145 @@
+.weather-effects-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1500; /* Above the map, below the insights panel */
+  overflow: hidden;
+  /* Add a subtle dark vignette to make weather pop */
+  box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.5);
+  animation: fadeInOverlay 1s ease-out forwards;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- RAIN EFFECTS --- */
+.rain-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(10deg) scale(1.5); /* Slight angle for realistic rain, scale to cover rotated edges */
+}
+
+.rain-drop {
+  position: absolute;
+  top: -200px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(56, 189, 248, 0.4) 80%, rgba(255,255,255,0.8));
+  animation: fall linear infinite;
+  border-radius: 50%;
+}
+
+@keyframes fall {
+  0% { 
+    transform: translateY(-20vh); 
+    opacity: 0; 
+  }
+  10% { 
+    opacity: 1; 
+  }
+  90% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateY(120vh); 
+    opacity: 0; 
+  }
+}
+
+/* --- WIND EFFECTS --- */
+.wind-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.wind-line {
+  position: absolute;
+  left: -300px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  animation: blow cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  border-radius: 100%;
+  filter: blur(1px);
+}
+
+@keyframes blow {
+  0% { 
+    transform: translateX(-10vw); 
+    opacity: 0; 
+  }
+  20% { 
+    opacity: 1; 
+  }
+  80% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateX(120vw); 
+    opacity: 0; 
+  }
+}
+
+/* --- LIGHTNING EFFECTS --- */
+.lightning-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.lightning-flash {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  animation: flash 8s infinite;
+  mix-blend-mode: overlay;
+}
+
+@keyframes flash {
+  0%, 94%, 98% { opacity: 0; }
+  95%, 99% { opacity: 0.8; }
+  96%, 100% { opacity: 0; }
+}
+
+/* --- SNOW EFFECTS --- */
+.snow-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.snow-flake {
+  position: absolute;
+  top: -50px;
+  background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 80%);
+  border-radius: 50%;
+  animation: snowFall linear infinite;
+  filter: blur(1px);
+}
+
+@keyframes snowFall {
+  0% { 
+    transform: translate(0, -10vh) rotate(0deg); 
+    opacity: 0;
+  }
+  10% { 
+    opacity: 1; 
+  }
+  50% { 
+    transform: translate(20px, 50vh) rotate(180deg); 
+  }
+  90% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translate(-20px, 110vh) rotate(360deg); 
+    opacity: 0;
+  }
+}

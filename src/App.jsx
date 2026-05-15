@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { WeatherMap } from './components/WeatherMap';
 import { CityInsights } from './components/CityInsights';
+import { WeatherEffects } from './components/WeatherEffects';
 import { fetchWeatherForCities } from './services/weatherApi';
 
 function App() {
@@ -31,6 +32,8 @@ function App() {
   return (
     <div className="app-container">
       <WeatherMap cities={citiesData} onCitySelect={setSelectedCity} selectedCity={selectedCity} />
+      
+      {selectedCity && <WeatherEffects weather={selectedCity.weather} />}
       
       {selectedCity && (
         <CityInsights city={selectedCity} onClose={() => setSelectedCity(null)} />

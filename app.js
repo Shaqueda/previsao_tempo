@@ -124,7 +124,7 @@ async function fetchWeatherData() {
     try {
         const lats = CITIES.map(c => c.lat).join(',');
         const lons = CITIES.map(c => c.lon).join(',');
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,is_day,weather_code&hourly=temperature_2m,weather_code,precipitation,is_day&daily=precipitation_sum&timezone=America%2FFortaleza`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,is_day,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation,is_day,wind_speed_10m&daily=precipitation_sum&timezone=America%2FFortaleza`;
 
         const response = await fetch(url);
         const data = await response.json();
@@ -159,13 +159,19 @@ async function fetchWeatherData() {
 // Interactivity functions
 function showCityDetails(city, data) {
     const panel = document.getElementById('city-details-panel');
+    const forecastPanel = document.getElementById('forecast-17-panel');
     
     // Reset animation by triggering reflow
     panel.style.animation = 'none';
     panel.offsetHeight; /* trigger reflow */
     panel.style.animation = null; 
     
+    forecastPanel.style.animation = 'none';
+    forecastPanel.offsetHeight;
+    forecastPanel.style.animation = null;
+    
     panel.style.display = 'flex';
+    forecastPanel.style.display = 'flex';
 
     // Fly to the clicked city with a smooth zoom
     map.flyTo([city.lat, city.lon], 11, {
@@ -173,23 +179,42 @@ function showCityDetails(city, data) {
         easeLinearity: 0.25
     });
 
-    // Index 17 represents 17:00 of the first returned day (today)
-    const hourIndex = 17;
-    
-    const temp17 = Math.round(data.hourly.temperature_2m[hourIndex]);
-    const code17 = data.hourly.weather_code[hourIndex];
-    const isDay17 = data.hourly.is_day[hourIndex];
+    // SITUAÇÃO ATUAL
+    const currentTemp = Math.round(data.current.temperature_2m);
+    const currentCode = data.current.weather_code;
+    const currentIsDay = data.current.is_day;
+    const currentWindSpeed = data.current.wind_speed_10m;
     const rainTotal = data.daily.precipitation_sum[0] || 0;
 
     document.getElementById('detail-city-name').textContent = city.name;
-    document.getElementById('detail-temp').textContent = temp17 + '°';
-    document.getElementById('detail-desc').textContent = getWeatherDescription(code17);
-    document.getElementById('detail-icon').textContent = getWeatherIcon(code17, isDay17);
+    document.getElementById('detail-temp').textContent = currentTemp + '°';
+    document.getElementById('detail-desc').textContent = getWeatherDescription(currentCode);
+    document.getElementById('detail-icon').textContent = getWeatherIcon(currentCode, currentIsDay);
     document.getElementById('detail-rain').textContent = rainTotal.toFixed(1).replace('.', ',') + ' mm';
+    
+    // Inject dynamic weather effects using CURRENT weather
+    renderWeatherEffects(currentCode, currentWindSpeed);
+
+    // PREVISÃO DAS 17H
+    const hourIndex = 17;
+    const temp17 = Math.round(data.hourly.temperature_2m[hourIndex]);
+    const code17 = data.hourly.weather_code[hourIndex];
+    const isDay17 = data.hourly.is_day[hourIndex];
+
+    document.getElementById('forecast-17-temp').textContent = temp17 + '°';
+    document.getElementById('forecast-17-desc').textContent = getWeatherDescription(code17);
+    document.getElementById('forecast-17-icon').textContent = getWeatherIcon(code17, isDay17);
 }
 
 function closeDetails() {
     document.getElementById('city-details-panel').style.display = 'none';
+    document.getElementById('forecast-17-panel').style.display = 'none';
+    
+    const overlay = document.getElementById('weather-effects-overlay');
+    if (overlay) {
+        overlay.innerHTML = '';
+        overlay.classList.remove('active');
+    }
     
     // Fly back to show the entire state
     if (cearaStateBounds) {
@@ -202,6 +227,58 @@ function closeDetails() {
 }
 // Expose for inline HTML onclick
 window.closeDetails = closeDetails;
+
+function renderWeatherEffects(code, windSpeed) {
+    const overlay = document.getElementById('weather-effects-overlay');
+    if (!overlay) return;
+    overlay.innerHTML = '';
+    overlay.classList.remove('active');
+    
+    let html = '';
+    
+    // Chuva: 51-67, 80-82, 95-99
+    const isRainy = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+    const isHeavyRain = code === 55 || code === 65 || code === 82 || (code >= 95 && code <= 99);
+    
+    if (isRainy) {
+        overlay.classList.add('active');
+        const dropCount = isHeavyRain ? 100 : 40;
+        let drops = '';
+        for(let i=0; i<dropCount; i++) {
+            const left = Math.random() * 100;
+            const dur = 0.6 + Math.random() * 0.6; // Slightly slower
+            const del = Math.random() * 2;
+            const height = 30 + Math.random() * 40; // Shorter
+            const opac = 0.15 + Math.random() * 0.3; // More transparent
+            drops += `<div class="rain-drop" style="left: ${left}%; animation-duration: ${dur}s; animation-delay: ${del}s; height: ${height}px; opacity: ${opac};"></div>`;
+        }
+        html += `<div class="rain-container">${drops}</div>`;
+    }
+    
+    // Vento (Para testes fáceis, limite ajustado para > 5 km/h)
+    if (windSpeed > 5) {
+        overlay.classList.add('active');
+        const lineCount = Math.min(Math.floor(windSpeed), 40);
+        let lines = '';
+        for(let i=0; i<lineCount; i++) {
+            const top = Math.random() * 100;
+            const dur = 0.8 + Math.random() * 1.5;
+            const del = Math.random() * 3;
+            const opac = 0.1 + Math.random() * 0.4;
+            const width = 100 + Math.random() * 250;
+            lines += `<div class="wind-line" style="top: ${top}%; animation-duration: ${dur}s; animation-delay: ${del}s; opacity: ${opac}; width: ${width}px;"></div>`;
+        }
+        html += `<div class="wind-container">${lines}</div>`;
+    }
+    
+    // Trovoadas: 95-99
+    if (code >= 95 && code <= 99) {
+        overlay.classList.add('active');
+        html += `<div class="lightning-container"><div class="lightning-flash"></div></div>`;
+    }
+
+    overlay.innerHTML = html;
+}
 
 // Initialize
 fetchWeatherData();
