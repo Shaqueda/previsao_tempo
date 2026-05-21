@@ -63,40 +63,67 @@ fetch('https://servicodados.ibge.gov.br/api/v3/malhas/estados/CE?formato=applica
 const markers = {};
 
 function getWeatherIcon(code, isDay) {
-    if (code === 0) return isDay ? '☀️' : '🌙';
-    if (code >= 1 && code <= 3) return isDay ? '⛅' : '☁️';
-    if (code >= 45 && code <= 48) return '🌫️';
-    if (code >= 51 && code <= 55) return '🌧️';
-    if (code >= 61 && code <= 65) return '🌦️';
-    if (code >= 71 && code <= 75) return '❄️';
-    if (code >= 80 && code <= 82) return '🌧️';
-    if (code >= 95 && code <= 99) return '⛈️';
+    if (code === 1000) return isDay ? '☀️' : '🌙';
+    if (code === 1003) return isDay ? '⛅' : '☁️';
+    if (code === 1006 || code === 1009) return '☁️';
+    if (code === 1030 || code === 1135 || code === 1147) return '🌫️';
+    if ([1072, 1150, 1153, 1168, 1171].includes(code)) return '🌧️';
+    if ([1063, 1180, 1183, 1186, 1189, 1192, 1195, 1240, 1243, 1246].includes(code)) return isDay ? '🌦️' : '🌧️';
+    if ([1087, 1273, 1276, 1279, 1282].includes(code)) return '⛈️';
+    if (code > 1000) return '❄️';
     return '☁️';
 }
 
 function getWeatherDescription(code) {
     const codes = {
-      0: 'Céu Limpo',
-      1: 'Predom. Limpo',
-      2: 'Parc. Nublado',
-      3: 'Nublado',
-      45: 'Nevoeiro',
-      48: 'Nevoeiro',
-      51: 'Garoa leve',
-      53: 'Garoa',
-      55: 'Garoa forte',
-      61: 'Chuva leve',
-      63: 'Chuva',
-      65: 'Chuva forte',
-      71: 'Neve leve',
-      73: 'Neve',
-      75: 'Neve forte',
-      80: 'Pancadas leves',
-      81: 'Pancadas chuva',
-      82: 'Pancadas fortes',
-      95: 'Trovoada',
-      96: 'Trovoada/Granizo',
-      99: 'Trovoada/Granizo'
+        1000: 'Céu Limpo',
+        1003: 'Parcialmente Nublado',
+        1006: 'Nublado',
+        1009: 'Encoberto',
+        1030: 'Névoa Úmida',
+        1063: 'Possibilidade de Chuva',
+        1066: 'Possibilidade de Neve',
+        1069: 'Possibilidade de Granizo',
+        1072: 'Garoa Gelada',
+        1087: 'Possibilidade de Trovoada',
+        1114: 'Vento com Neve',
+        1117: 'Ventania com Neve',
+        1135: 'Nevoeiro',
+        1147: 'Nevoeiro Congelante',
+        1150: 'Garoa Leve Intermitente',
+        1153: 'Garoa Leve',
+        1168: 'Garoa Congelante Leve',
+        1171: 'Garoa Congelante Forte',
+        1180: 'Chuva Leve Intermitente',
+        1183: 'Chuva Leve',
+        1186: 'Chuva Moderada Intermitente',
+        1189: 'Chuva Moderada',
+        1192: 'Chuva Forte Intermitente',
+        1195: 'Chuva Forte',
+        1198: 'Chuva Congelante Leve',
+        1201: 'Chuva Congelante Forte',
+        1204: 'Granizo Leve',
+        1207: 'Granizo Forte',
+        1210: 'Neve Leve Intermitente',
+        1213: 'Neve Leve',
+        1216: 'Neve Moderada Intermitente',
+        1219: 'Neve Moderada',
+        1222: 'Neve Forte Intermitente',
+        1225: 'Neve Forte',
+        1237: 'Granizo de Gelo',
+        1240: 'Pancadas de Chuva Leves',
+        1243: 'Pancadas de Chuva Moderadas/Fortes',
+        1246: 'Pancadas de Chuva Torrentiais',
+        1249: 'Pancadas de Granizo Leves',
+        1252: 'Pancadas de Granizo Fortes',
+        1255: 'Pancadas de Neve Leves',
+        1258: 'Pancadas de Neve Fortes',
+        1261: 'Pancadas de Chuva com Gelo Leves',
+        1264: 'Pancadas de Chuva com Gelo Fortes',
+        1273: 'Chuva Leve com Trovoadas',
+        1276: 'Chuva Forte com Trovoadas',
+        1279: 'Neve Leve com Trovoadas',
+        1282: 'Neve Forte com Trovoadas'
     };
     return codes[code] || 'Desconhecido';
 }
@@ -121,17 +148,48 @@ function createMarkerHTML(city, weather) {
 }
 
 async function fetchWeatherData() {
+    const key = localStorage.getItem('weather_api_key');
+    if (!key) return;
+
     try {
-        const lats = CITIES.map(c => c.lat).join(',');
-        const lons = CITIES.map(c => c.lon).join(',');
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,is_day,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation,is_day,wind_speed_10m&daily=precipitation_sum&timezone=America%2FFortaleza`;
+        const fetchPromises = CITIES.map(async (city) => {
+            try {
+                const url = `https://api.weatherapi.com/v1/forecast.json?key=${key}&q=${city.lat},${city.lon}&days=1&aqi=no&alerts=no`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Failed to fetch for ${city.name}`);
+                const data = await response.json();
+                
+                // Map WeatherAPI to Open-Meteo format for compatibility
+                return {
+                    cityId: city.id,
+                    mapped: {
+                        current: {
+                            temperature_2m: data.current.temp_c,
+                            is_day: data.current.is_day,
+                            weather_code: data.current.condition.code,
+                            wind_speed_10m: data.current.wind_kph
+                        },
+                        daily: {
+                            precipitation_sum: [data.forecast.forecastday[0].day.totalprecip_mm]
+                        },
+                        hourly: {
+                            temperature_2m: data.forecast.forecastday[0].hour.map(h => h.temp_c),
+                            weather_code: data.forecast.forecastday[0].hour.map(h => h.condition.code),
+                            is_day: data.forecast.forecastday[0].hour.map(h => h.is_day)
+                        }
+                    }
+                };
+            } catch (err) {
+                console.error(`Erro ao carregar clima de ${city.name}:`, err);
+                return null;
+            }
+        });
 
-        const response = await fetch(url);
-        const data = await response.json();
-
-        CITIES.forEach((city, index) => {
-            const locationData = Array.isArray(data) ? data[index] : data;
-            const weather = locationData.current;
+        const results = (await Promise.all(fetchPromises)).filter(r => r !== null);
+        
+        results.forEach(({ cityId, mapped }) => {
+            const city = CITIES.find(c => c.id === cityId);
+            const weather = mapped.current;
 
             if (markers[city.id]) {
                 map.removeLayer(markers[city.id]);
@@ -147,7 +205,7 @@ async function fetchWeatherData() {
             const marker = L.marker([city.lat, city.lon], { icon: customIcon }).addTo(map);
             
             // Add click event for details panel
-            marker.on('click', () => showCityDetails(city, locationData));
+            marker.on('click', () => showCityDetails(city, mapped));
             
             markers[city.id] = marker;
         });
@@ -236,9 +294,9 @@ function renderWeatherEffects(code, windSpeed) {
     
     let html = '';
     
-    // Chuva: 51-67, 80-82, 95-99
-    const isRainy = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
-    const isHeavyRain = code === 55 || code === 65 || code === 82 || (code >= 95 && code <= 99);
+    // Chuva: 1063, 1150-1171, 1180-1201, 1240-1246, 1273-1276
+    const isRainy = [1063, 1150, 1153, 1168, 1171, 1180, 1183, 1186, 1189, 1192, 1195, 1240, 1243, 1246, 1273, 1276].includes(code);
+    const isHeavyRain = [1192, 1195, 1243, 1246, 1276].includes(code);
     
     if (isRainy) {
         overlay.classList.add('active');
@@ -246,10 +304,10 @@ function renderWeatherEffects(code, windSpeed) {
         let drops = '';
         for(let i=0; i<dropCount; i++) {
             const left = Math.random() * 100;
-            const dur = 0.6 + Math.random() * 0.6; // Slightly slower
+            const dur = 0.6 + Math.random() * 0.6;
             const del = Math.random() * 2;
-            const height = 30 + Math.random() * 40; // Shorter
-            const opac = 0.15 + Math.random() * 0.3; // More transparent
+            const height = 30 + Math.random() * 40;
+            const opac = 0.15 + Math.random() * 0.3;
             drops += `<div class="rain-drop" style="left: ${left}%; animation-duration: ${dur}s; animation-delay: ${del}s; height: ${height}px; opacity: ${opac};"></div>`;
         }
         html += `<div class="rain-container">${drops}</div>`;
@@ -271,8 +329,9 @@ function renderWeatherEffects(code, windSpeed) {
         html += `<div class="wind-container">${lines}</div>`;
     }
     
-    // Trovoadas: 95-99
-    if (code >= 95 && code <= 99) {
+    // Trovoadas: 1087, 1273, 1276, 1279, 1282
+    const isThunder = [1087, 1273, 1276, 1279, 1282].includes(code);
+    if (isThunder) {
         overlay.classList.add('active');
         html += `<div class="lightning-container"><div class="lightning-flash"></div></div>`;
     }
@@ -280,6 +339,53 @@ function renderWeatherEffects(code, windSpeed) {
     overlay.innerHTML = html;
 }
 
-// Initialize
-fetchWeatherData();
-setInterval(fetchWeatherData, 5 * 60 * 1000); // Update every 5 mins
+// Lógica de Configurações de API Key
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    const input = document.getElementById('api-key-input');
+    if (modal && input) {
+        input.value = localStorage.getItem('weather_api_key') || '';
+        modal.style.display = 'flex';
+    }
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function saveApiKey() {
+    const input = document.getElementById('api-key-input');
+    if (input) {
+        const key = input.value.trim();
+        if (key) {
+            localStorage.setItem('weather_api_key', key);
+        } else {
+            localStorage.removeItem('weather_api_key');
+        }
+        closeSettingsModal();
+        checkApiKeyAndFetch();
+    }
+}
+
+function checkApiKeyAndFetch() {
+    const key = localStorage.getItem('weather_api_key');
+    const warning = document.getElementById('api-key-warning');
+    if (!key) {
+        if (warning) warning.style.display = 'block';
+        return;
+    }
+    if (warning) warning.style.display = 'none';
+    fetchWeatherData();
+}
+
+// Expor funções para escopo global para onclick inline no HTML
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveApiKey = saveApiKey;
+
+// Inicialização
+checkApiKeyAndFetch();
+setInterval(checkApiKeyAndFetch, 5 * 60 * 1000); // Atualiza a cada 5 mins

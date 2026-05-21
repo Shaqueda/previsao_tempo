@@ -8,65 +8,95 @@ export const CITIES = [
 ];
 
 export async function fetchWeatherForCities() {
-  // Open-Meteo accepts multiple coordinates in a single request.
-  const lats = CITIES.map(c => c.lat).join(',');
-  const lons = CITIES.map(c => c.lon).join(',');
-  
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,relative_humidity_2m,is_day,precipitation,weather_code,wind_speed_10m&timezone=America%2FFortaleza`;
+  const key = localStorage.getItem('weather_api_key');
+  if (!key) {
+    console.warn("WeatherAPI key is missing in localStorage");
+    return [];
+  }
 
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch weather data');
-    const data = await response.json();
-    
-    // Map response back to cities
-    return CITIES.map((city, index) => {
-      // The API returns an array for multiple locations
-      const locationData = Array.isArray(data) ? data[index] : data;
-      const current = locationData.current;
-      
-      return {
-        ...city,
-        weather: {
-          temp: Math.round(current.temperature_2m),
-          humidity: current.relative_humidity_2m,
-          windSpeed: current.wind_speed_10m,
-          precipitation: current.precipitation,
-          isDay: current.is_day,
-          code: current.weather_code, // WMO code
-        }
-      };
+    const fetchPromises = CITIES.map(async (city) => {
+      try {
+        const url = `https://api.weatherapi.com/v1/current.json?key=${key}&q=${city.lat},${city.lon}&aqi=no`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch for ${city.name}`);
+        const data = await response.json();
+        
+        return {
+          ...city,
+          weather: {
+            temp: Math.round(data.current.temp_c),
+            humidity: data.current.humidity,
+            windSpeed: data.current.wind_kph,
+            precipitation: data.current.precip_mm,
+            isDay: data.current.is_day,
+            code: data.current.condition.code,
+          }
+        };
+      } catch (err) {
+        console.error(`Erro ao carregar clima de ${city.name}:`, err);
+        return null;
+      }
     });
+
+    return (await Promise.all(fetchPromises)).filter(r => r !== null);
   } catch (error) {
     console.error("Error fetching weather:", error);
     return [];
   }
 }
 
-// WMO Weather interpretation codes (https://open-meteo.com/en/docs)
+// WeatherAPI condition codes translation to Portuguese
 export function getWeatherDescription(code) {
   const codes = {
-    0: 'Céu Limpo',
-    1: 'Predominantemente Limpo',
-    2: 'Parcialmente Nublado',
-    3: 'Nublado',
-    45: 'Nevoeiro',
-    48: 'Nevoeiro com geada',
-    51: 'Garoa leve',
-    53: 'Garoa moderada',
-    55: 'Garoa forte',
-    61: 'Chuva leve',
-    63: 'Chuva moderada',
-    65: 'Chuva forte',
-    71: 'Neve leve',
-    73: 'Neve moderada',
-    75: 'Neve forte',
-    80: 'Pancadas de chuva leves',
-    81: 'Pancadas de chuva moderadas',
-    82: 'Pancadas de chuva fortes',
-    95: 'Trovoada',
-    96: 'Trovoada com granizo leve',
-    99: 'Trovoada com granizo forte'
+    1000: 'Céu Limpo',
+    1003: 'Parcialmente Nublado',
+    1006: 'Nublado',
+    1009: 'Encoberto',
+    1030: 'Névoa Úmida',
+    1063: 'Possibilidade de Chuva',
+    1066: 'Possibilidade de Neve',
+    1069: 'Possibilidade de Granizo',
+    1072: 'Garoa Gelada',
+    1087: 'Possibilidade de Trovoada',
+    1114: 'Vento com Neve',
+    1117: 'Ventania com Neve',
+    1135: 'Nevoeiro',
+    1147: 'Nevoeiro Congelante',
+    1150: 'Garoa Leve Intermitente',
+    1153: 'Garoa Leve',
+    1168: 'Garoa Congelante Leve',
+    1171: 'Garoa Congelante Forte',
+    1180: 'Chuva Leve Intermitente',
+    1183: 'Chuva Leve',
+    1186: 'Chuva Moderada Intermitente',
+    1189: 'Chuva Moderada',
+    1192: 'Chuva Forte Intermitente',
+    1195: 'Chuva Forte',
+    1198: 'Chuva Congelante Leve',
+    1201: 'Chuva Congelante Forte',
+    1204: 'Granizo Leve',
+    1207: 'Granizo Forte',
+    1210: 'Neve Leve Intermitente',
+    1213: 'Neve Leve',
+    1216: 'Neve Moderada Intermitente',
+    1219: 'Neve Moderada',
+    1222: 'Neve Forte Intermitente',
+    1225: 'Neve Forte',
+    1237: 'Granizo de Gelo',
+    1240: 'Pancadas de Chuva Leves',
+    1243: 'Pancadas de Chuva Moderadas/Fortes',
+    1246: 'Pancadas de Chuva Torrentiais',
+    1249: 'Pancadas de Granizo Leves',
+    1252: 'Pancadas de Granizo Fortes',
+    1255: 'Pancadas de Neve Leves',
+    1258: 'Pancadas de Neve Fortes',
+    1261: 'Pancadas de Chuva com Gelo Leves',
+    1264: 'Pancadas de Chuva com Gelo Fortes',
+    1273: 'Chuva Leve com Trovoadas',
+    1276: 'Chuva Forte com Trovoadas',
+    1279: 'Neve Leve com Trovoadas',
+    1282: 'Neve Forte com Trovoadas'
   };
   return codes[code] || 'Desconhecido';
 }

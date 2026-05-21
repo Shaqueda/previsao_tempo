@@ -6,16 +6,16 @@ export const WeatherEffects = ({ weather }) => {
 
   const { code, windSpeed } = weather;
   
-  // WMO Weather interpretation codes
-  // Rain: 51-55 (Drizzle), 61-65 (Rain), 80-82 (Showers)
-  const isRainy = (code >= 51 && code <= 67) || (code >= 80 && code <= 82);
-  const isHeavyRain = code === 55 || code === 65 || code === 82 || (code >= 95 && code <= 99);
+  // WeatherAPI weather condition codes
+  // Rain: 1063, 1150-1171, 1180-1201, 1240-1246, 1273-1276
+  const isRainy = [1063, 1150, 1153, 1168, 1171, 1180, 1183, 1186, 1189, 1192, 1195, 1240, 1243, 1246, 1273, 1276].includes(code);
+  const isHeavyRain = [1192, 1195, 1243, 1246, 1276].includes(code);
   
-  // Snow: 71-77 (Snow), 85-86 (Snow showers)
-  const isSnowy = (code >= 71 && code <= 77) || (code >= 85 && code <= 86);
+  // Snow: 1066, 1069, 1114, 1117, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264, 1279, 1282
+  const isSnowy = [1066, 1069, 1114, 1117, 1204, 1207, 1210, 1213, 1216, 1219, 1222, 1225, 1237, 1249, 1252, 1255, 1258, 1261, 1264, 1279, 1282].includes(code);
   
-  // Thunderstorm: 95-99
-  const isThunderstorm = code >= 95 && code <= 99;
+  // Thunderstorm: 1087, 1273, 1276, 1279, 1282
+  const isThunderstorm = [1087, 1273, 1276, 1279, 1282].includes(code);
   
   // Wind: Lowered threshold to 5 km/h just so you can see the effect easily right now!
   const isWindy = windSpeed > 5; 

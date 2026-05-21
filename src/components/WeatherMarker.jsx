@@ -8,14 +8,14 @@ import { getWeatherDescription } from '../services/weatherApi';
 const WeatherIcon = ({ code, isDay }) => {
   const props = { size: 28, strokeWidth: 2 };
   
-  if (code === 0) return isDay ? <Sun {...props} /> : <Moon {...props} />;
-  if (code >= 1 && code <= 3) return isDay ? <CloudSun {...props} /> : <CloudMoon {...props} />;
-  if (code >= 45 && code <= 48) return <CloudFog {...props} />;
-  if (code >= 51 && code <= 55) return <CloudDrizzle {...props} />;
-  if (code >= 61 && code <= 65) return <CloudRain {...props} />;
-  if (code >= 71 && code <= 75) return <CloudSnow {...props} />;
-  if (code >= 80 && code <= 82) return <CloudRain {...props} />;
-  if (code >= 95 && code <= 99) return <CloudLightning {...props} />;
+  if (code === 1000) return isDay ? <Sun {...props} /> : <Moon {...props} />;
+  if (code === 1003) return isDay ? <CloudSun {...props} /> : <CloudMoon {...props} />;
+  if (code === 1006 || code === 1009) return <Cloud {...props} />;
+  if (code === 1030 || code === 1135 || code === 1147) return <CloudFog {...props} />;
+  if ([1072, 1150, 1153, 1168, 1171].includes(code)) return <CloudDrizzle {...props} />;
+  if ([1063, 1180, 1183, 1186, 1189, 1192, 1195, 1240, 1243, 1246].includes(code)) return <CloudRain {...props} />;
+  if ([1087, 1273, 1276, 1279, 1282].includes(code)) return <CloudLightning {...props} />;
+  if (code > 1000) return <CloudSnow {...props} />;
   
   return <Cloud {...props} />;
 };

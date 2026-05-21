@@ -50,6 +50,24 @@
                 </div>
             </div>
         </div>
+        <!-- Configurações de API -->
+        <button id="settings-trigger-btn" class="settings-trigger-btn" onclick="openSettingsModal()">⚙️</button>
+        
+        <div id="settings-modal" class="settings-modal" style="display: none;">
+            <div class="modal-content">
+                <h3>Configuração de API</h3>
+                <p>Insira sua chave do <a href="https://www.weatherapi.com/" target="_blank" style="color: var(--accent-color);">WeatherAPI.com</a> para obter dados em tempo real.</p>
+                <input type="password" id="api-key-input" placeholder="Cole sua API Key aqui..." />
+                <div class="modal-actions">
+                    <button class="save-btn" onclick="saveApiKey()">Salvar</button>
+                    <button class="cancel-btn" onclick="closeSettingsModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="api-key-warning" class="api-key-warning" style="display: none;" onclick="openSettingsModal()">
+            <span>⚠️ API Key necessária para tempo real. Clique aqui para configurar.</span>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
